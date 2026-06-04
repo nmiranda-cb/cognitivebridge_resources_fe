@@ -237,6 +237,35 @@ function notify(message: string, type: "error" | "success" = "error") {
   });
 }
 
+function notifyToast(message: string, type: "error" | "success" = "success") {
+  const key = `toast:${type}:${message}`;
+  const now = Date.now();
+
+  if (lastAlertKey === key && now - lastAlertAt < 600) {
+    return;
+  }
+
+  lastAlertKey = key;
+  lastAlertAt = now;
+
+  void Swal.fire({
+    customClass: {
+      htmlContainer: "swal-toast-copy",
+      popup: `swal-toast ${type}`,
+      timerProgressBar: "swal-toast-progress",
+      title: "swal-toast-title",
+    },
+    html: `<span class="swal-toast-brand">EMAUS</span><span>${escapeHtml(message)}</span>`,
+    icon: type,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3600,
+    timerProgressBar: true,
+    toast: true,
+    width: "430px",
+  });
+}
+
 function escapeHtml(value: string) {
   return value.replace(
     /[&"'<>]/g,
@@ -1046,7 +1075,6 @@ function DashboardModule({ session }: { session: AuthSession }) {
   const [status, setStatus] = useState<LoadStatus>("idle");
   const [opportunities, setOpportunities] = useState<StaffOpportunity[]>([]);
   const [users, setUsers] = useState<ResourceUser[]>([]);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (session.authorizationToken === "local-preview") {
@@ -1110,10 +1138,11 @@ function DashboardModule({ session }: { session: AuthSession }) {
       })
       .catch((error) => {
         setStatus("error");
-        setMessage(
+        notifyToast(
           error instanceof Error
             ? error.message
             : "No se pudo cargar el dashboard.",
+          "error",
         );
       });
   }, [isAdmin]);
@@ -1132,7 +1161,6 @@ function DashboardModule({ session }: { session: AuthSession }) {
         kicker="Workspace interno"
         title="Panel operativo"
       />
-      {message ? <InlineStatus kind={status} message={message} /> : null}
       <div className="metric-grid">
         <MetricCard
           icon={<BriefcaseBusiness />}
@@ -1218,7 +1246,6 @@ function DashboardModule({ session }: { session: AuthSession }) {
 
 function OpportunitiesModule() {
   const [form, setForm] = useState(initialOpportunityForm);
-  const [message, setMessage] = useState("");
   const [opportunities, setOpportunities] = useState<StaffOpportunity[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<LoadStatus>("idle");
@@ -1263,7 +1290,6 @@ function OpportunitiesModule() {
 
   async function loadOpportunities() {
     setStatus("loading");
-    setMessage("");
 
     try {
       const response = await listStaffOpportunities();
@@ -1271,10 +1297,11 @@ function OpportunitiesModule() {
       setStatus("idle");
     } catch (error) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         error instanceof Error
           ? error.message
           : "No se pudieron cargar oportunidades.",
+        "error",
       );
     }
   }
@@ -1285,30 +1312,32 @@ function OpportunitiesModule() {
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
     const payload = toPayload(form);
     const payloadRequirements = payload.requirements ?? [];
 
     if (payload.summary.length > opportunitySummaryMaxLength) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         `La descripción no puede superar ${opportunitySummaryMaxLength} caracteres.`,
+        "error",
       );
       return;
     }
 
     if (form.requirements.length > opportunityRequirementsMaxLength) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         `Los requisitos no pueden superar ${opportunityRequirementsMaxLength} caracteres en total.`,
+        "error",
       );
       return;
     }
 
     if (payloadRequirements.length > opportunityRequirementsMaxItems) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         `Puedes registrar hasta ${opportunityRequirementsMaxItems} requisitos principales.`,
+        "error",
       );
       return;
     }
@@ -1318,14 +1347,15 @@ function OpportunitiesModule() {
     try {
       await createStaffOpportunity(payload);
       setForm(initialOpportunityForm);
-      setMessage("Oportunidad creada.");
+      notifyToast("Oportunidad creada.", "success");
       await loadOpportunities();
     } catch (error) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         error instanceof Error
           ? error.message
           : "No se pudo crear la oportunidad.",
+        "error",
       );
     }
   }
@@ -1335,7 +1365,6 @@ function OpportunitiesModule() {
     nextStatus: StaffOpportunityStatus,
   ) {
     setStatus("saving");
-    setMessage("");
 
     try {
       const response = await updateStaffOpportunity(opportunityId, {
@@ -1348,14 +1377,15 @@ function OpportunitiesModule() {
             : opportunity,
         ),
       );
-      setMessage("Estado actualizado.");
+      notifyToast("Estado actualizado.", "success");
       setStatus("idle");
     } catch (error) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         error instanceof Error
           ? error.message
           : "No se pudo actualizar el estado.",
+        "error",
       );
     }
   }
@@ -1388,7 +1418,6 @@ function OpportunitiesModule() {
           />
         ))}
       </div>
-      {message ? <InlineStatus kind={status} message={message} /> : null}
       <div className="workbench-grid">
         <form className="panel form-panel" onSubmit={handleCreate}>
           <div className="panel-title-row">
@@ -1746,14 +1775,12 @@ function SignatureModule() {
 
 function UsersModule() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [role, setRole] = useState<"admin" | "user">("user");
   const [status, setStatus] = useState<LoadStatus>("idle");
   const [users, setUsers] = useState<ResourceUser[]>([]);
 
   async function loadUsers() {
     setStatus("loading");
-    setMessage("");
 
     try {
       const response = await listResourceUsers();
@@ -1761,8 +1788,9 @@ function UsersModule() {
       setStatus("idle");
     } catch (error) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         error instanceof Error ? error.message : "No se pudo cargar usuarios.",
+        "error",
       );
     }
   }
@@ -1774,36 +1802,36 @@ function UsersModule() {
   async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("saving");
-    setMessage("");
 
     try {
       await inviteResourceUser(email, role);
       setEmail("");
       setRole("user");
-      setMessage("Usuario invitado.");
+      notifyToast("Usuario invitado.", "success");
       await loadUsers();
     } catch (error) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         error instanceof Error ? error.message : "No se pudo invitar usuario.",
+        "error",
       );
     }
   }
 
   async function handleDisable(username: string) {
     setStatus("saving");
-    setMessage("");
 
     try {
       await disableResourceUser(username);
-      setMessage("Usuario deshabilitado.");
+      notifyToast("Usuario deshabilitado.", "success");
       await loadUsers();
     } catch (error) {
       setStatus("error");
-      setMessage(
+      notifyToast(
         error instanceof Error
           ? error.message
           : "No se pudo deshabilitar usuario.",
+        "error",
       );
     }
   }
@@ -1825,7 +1853,6 @@ function UsersModule() {
         kicker="Administración"
         title="Usuarios internos"
       />
-      {message ? <InlineStatus kind={status} message={message} /> : null}
       <div className="users-layout">
         <form className="panel form-panel invite-panel" onSubmit={handleInvite}>
           <div className="panel-title-row">
