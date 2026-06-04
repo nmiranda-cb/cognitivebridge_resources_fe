@@ -390,7 +390,7 @@ function toReadableResourcesError(message?: string) {
   const normalizedMessage = message.toLowerCase();
 
   if (normalizedMessage.includes("requirements must contain no more than")) {
-    return "Puedes registrar hasta 12 requisitos principales.";
+    return "Puedes registrar hasta 40 requisitos principales.";
   }
 
   return message;
