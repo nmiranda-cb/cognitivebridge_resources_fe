@@ -1,10 +1,11 @@
-# CognitiveBridge Resources FE
+# CognitiveBridge EMAUS FE
 
 Frontend privado para `resources.cognitivebridge.cl`.
 
 ## Proposito
 
-Aplicacion React + Vite para operar herramientas internas de CognitiveBridge:
+Aplicacion React + Vite para operar EMAUS, el backoffice interno de
+CognitiveBridge:
 
 - Dashboard operativo.
 - Backoffice Staff Services.
