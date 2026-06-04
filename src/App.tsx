@@ -113,7 +113,7 @@ const modules: ModuleDefinition[] = [
   },
   {
     adminOnly: true,
-    description: "Pipeline y oportunidades para servicios de staff.",
+    description: "Oportunidades y publicaciones para servicios de staff.",
     icon: <BriefcaseBusiness size={19} />,
     key: "opportunities",
     label: "Staff Services",
@@ -204,6 +204,10 @@ const initialOpportunityForm = {
   title: "",
 };
 
+const opportunitySummaryMaxLength = 900;
+const opportunityRequirementsMaxItems = 12;
+const opportunityRequirementsMaxLength = 1200;
+
 let lastAlertKey = "";
 let lastAlertAt = 0;
 
@@ -274,18 +278,22 @@ function toPayload(
 ): StaffOpportunityPayload {
   return {
     area: form.area,
-    location: form.location,
+    location: form.location.trim(),
     modality: form.modality,
-    requirements: form.requirements
-      .split("\n")
-      .map((requirement) => requirement.trim())
-      .filter(Boolean),
+    requirements: parseOpportunityRequirements(form.requirements),
     seniority: form.seniority,
     serviceModel: form.serviceModel,
     status: form.status,
-    summary: form.summary,
-    title: form.title,
+    summary: form.summary.trim(),
+    title: form.title.trim(),
   };
+}
+
+function parseOpportunityRequirements(value: string) {
+  return value
+    .split("\n")
+    .map((requirement) => requirement.trim())
+    .filter(Boolean);
 }
 
 function App() {
@@ -1120,7 +1128,7 @@ function DashboardModule({ session }: { session: AuthSession }) {
   return (
     <section className="module-stack">
       <ModuleHeader
-        description="Vista central para operar herramientas internas, accesos y pipeline."
+        description="Vista central para operar herramientas internas, accesos y oportunidades."
         kicker="Workspace interno"
         title="Panel operativo"
       />
@@ -1148,7 +1156,7 @@ function DashboardModule({ session }: { session: AuthSession }) {
           <div className="panel-title-row">
             <div>
               <p className="eyebrow">Staff Services</p>
-              <h2>Pipeline reciente</h2>
+              <h2>Oportunidades recientes</h2>
             </div>
             <span className="panel-chip">
               {status === "loading"
@@ -1173,7 +1181,7 @@ function DashboardModule({ session }: { session: AuthSession }) {
               <EmptyState
                 icon={<Database />}
                 text="Aun no hay oportunidades creadas."
-                title="Pipeline sin registros"
+                title="Sin oportunidades registradas"
               />
             ) : null}
           </div>
@@ -1249,6 +1257,9 @@ function OpportunitiesModule() {
 
     return matchesStatus && searchable.includes(query.trim().toLowerCase());
   });
+  const requirementCount = parseOpportunityRequirements(
+    form.requirements,
+  ).length;
 
   async function loadOpportunities() {
     setStatus("loading");
@@ -1274,11 +1285,38 @@ function OpportunitiesModule() {
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus("saving");
     setMessage("");
+    const payload = toPayload(form);
+    const payloadRequirements = payload.requirements ?? [];
+
+    if (payload.summary.length > opportunitySummaryMaxLength) {
+      setStatus("error");
+      setMessage(
+        `La descripción no puede superar ${opportunitySummaryMaxLength} caracteres.`,
+      );
+      return;
+    }
+
+    if (form.requirements.length > opportunityRequirementsMaxLength) {
+      setStatus("error");
+      setMessage(
+        `Los requisitos no pueden superar ${opportunityRequirementsMaxLength} caracteres en total.`,
+      );
+      return;
+    }
+
+    if (payloadRequirements.length > opportunityRequirementsMaxItems) {
+      setStatus("error");
+      setMessage(
+        `Puedes registrar hasta ${opportunityRequirementsMaxItems} requisitos principales.`,
+      );
+      return;
+    }
+
+    setStatus("saving");
 
     try {
-      await createStaffOpportunity(toPayload(form));
+      await createStaffOpportunity(payload);
       setForm(initialOpportunityForm);
       setMessage("Oportunidad creada.");
       await loadOpportunities();
@@ -1409,7 +1447,10 @@ function OpportunitiesModule() {
             value={form.location}
           />
           <TextareaField
+            counter={`${form.summary.length}/${opportunitySummaryMaxLength}`}
+            hint="Describe el alcance con foco en lo que necesita el cliente."
             label="Descripción"
+            maxLength={opportunitySummaryMaxLength}
             onChange={(value) =>
               setForm((current) => ({ ...current, summary: value }))
             }
@@ -1417,7 +1458,10 @@ function OpportunitiesModule() {
             value={form.summary}
           />
           <TextareaField
+            counter={`${requirementCount}/${opportunityRequirementsMaxItems} requisitos`}
+            hint="Un requisito por línea. Máximo 12 requisitos."
             label="Requisitos principales"
+            maxLength={opportunityRequirementsMaxLength}
             onChange={(value) =>
               setForm((current) => ({ ...current, requirements: value }))
             }
@@ -1437,7 +1481,7 @@ function OpportunitiesModule() {
         <section className="panel table-panel">
           <div className="panel-title-row wrap">
             <div>
-              <p className="eyebrow">Pipeline</p>
+              <p className="eyebrow">Gestión</p>
               <h2>Oportunidades</h2>
             </div>
             <div className="table-tools">
@@ -1509,23 +1553,26 @@ function OpportunitiesModule() {
                     </div>
                   </dl>
                 </div>
-                <select
-                  aria-label={`Cambiar estado de ${opportunity.title}`}
-                  disabled={status === "saving"}
-                  onChange={(event) =>
-                    handleStatusChange(
-                      opportunity.opportunityId,
-                      event.target.value as StaffOpportunityStatus,
-                    )
-                  }
-                  value={opportunity.status}
-                >
-                  {Object.entries(statusLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <label className="status-control">
+                  <span>Estado</span>
+                  <select
+                    aria-label={`Cambiar estado de ${opportunity.title}`}
+                    disabled={status === "saving"}
+                    onChange={(event) =>
+                      handleStatusChange(
+                        opportunity.opportunityId,
+                        event.target.value as StaffOpportunityStatus,
+                      )
+                    }
+                    value={opportunity.status}
+                  >
+                    {Object.entries(statusLabels).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </article>
             ))}
           </div>
@@ -2066,13 +2113,19 @@ function SelectField({
 }
 
 function TextareaField({
+  counter,
+  hint,
   label,
+  maxLength,
   onChange,
   placeholder,
   rows,
   value,
 }: {
+  counter?: string;
+  hint?: string;
   label: string;
+  maxLength?: number;
   onChange: (value: string) => void;
   placeholder?: string;
   rows: number;
@@ -2082,11 +2135,18 @@ function TextareaField({
     <label className="field">
       <span>{label}</span>
       <textarea
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
         value={value}
       />
+      {hint || counter ? (
+        <span className="field-footer">
+          <span>{hint}</span>
+          <strong>{counter}</strong>
+        </span>
+      ) : null}
     </label>
   );
 }
