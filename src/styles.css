@@ -920,6 +920,53 @@ textarea:focus {
   font-weight: 850;
 }
 
+.swal-toast {
+  border: 1px solid #d8e8ec;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 20px 50px rgba(11, 47, 77, 0.16);
+  color: #172033;
+  padding: 10px 14px;
+}
+
+.swal-toast.success {
+  border-left: 5px solid #1aa8b7;
+}
+
+.swal-toast.error {
+  border-left: 5px solid #9b2226;
+}
+
+.swal-toast-copy {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  color: #172033;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.swal-toast-brand {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #eaf8fa;
+  color: #0b2f4d;
+  padding: 5px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.swal-toast-progress {
+  background: rgba(26, 168, 183, 0.24);
+}
+
+.swal-toast-progress .swal2-timer-progress-bar {
+  background: #1aa8b7;
+}
+
 @media (max-width: 1320px) {
   .app-body {
     grid-template-columns: 286px minmax(0, 1fr);
