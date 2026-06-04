@@ -185,7 +185,6 @@ textarea:focus {
 
 .primary-button,
 .secondary-button,
-.create-button,
 .topbar-signout {
   display: inline-flex;
   min-height: 42px;
@@ -266,11 +265,6 @@ textarea:focus {
   filter: brightness(0) invert(1);
 }
 
-.create-button {
-  background: #ffffff;
-  color: #172033;
-}
-
 .topbar-title {
   overflow: hidden;
   max-width: 380px;
@@ -335,7 +329,7 @@ textarea:focus {
 
 .app-body {
   display: grid;
-  grid-template-columns: 306px minmax(0, 1fr) 280px;
+  grid-template-columns: 306px minmax(0, 1fr);
   min-height: calc(100vh - 74px);
 }
 
@@ -540,15 +534,13 @@ textarea:focus {
 
 .compact-list,
 .work-list,
-.opportunity-list,
-.teammate-list {
+.opportunity-list {
   display: grid;
   gap: 12px;
 }
 
 .compact-list article,
-.work-item,
-.teammate-list article {
+.work-item {
   display: grid;
   gap: 12px;
   align-items: center;
@@ -565,17 +557,14 @@ textarea:focus {
 }
 
 .compact-list strong,
-.compact-list small,
-.teammate-list strong,
-.teammate-list span {
+.compact-list small {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.compact-list small,
-.teammate-list span {
+.compact-list small {
   color: #6b8090;
   font-size: 0.84rem;
 }
@@ -844,62 +833,6 @@ textarea:focus {
   text-transform: uppercase;
 }
 
-.right-rail {
-  position: sticky;
-  top: 74px;
-  height: calc(100vh - 74px);
-  overflow-y: auto;
-  border-left: 1px solid #e5ebf0;
-  background: #ffffff;
-  padding: 28px 20px;
-}
-
-.rail-search {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  border: 1px solid #d8e1e8;
-  border-radius: 999px;
-  padding: 0 12px;
-  color: #688092;
-}
-
-.rail-search input {
-  min-height: 38px;
-  border: 0;
-  padding: 0;
-}
-
-.right-rail section {
-  margin-top: 28px;
-}
-
-.right-rail h2 {
-  margin: 0 0 14px;
-  color: #172033;
-  font-size: 1rem;
-}
-
-.teammate-list article {
-  grid-template-columns: auto minmax(0, 1fr);
-}
-
-.system-status {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  margin-bottom: 10px;
-  color: #536c80;
-  font-size: 0.9rem;
-}
-
-.system-status span {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: #20b486;
-}
-
 .mobile-only {
   display: none;
 }
@@ -946,10 +879,6 @@ textarea:focus {
     grid-template-columns: 286px minmax(0, 1fr);
   }
 
-  .right-rail {
-    display: none;
-  }
-
   .dashboard-grid,
   .workbench-grid,
   .users-layout {
@@ -967,7 +896,6 @@ textarea:focus {
     width: 154px;
   }
 
-  .create-button,
   .topbar-actions .icon-button,
   .topbar-signout {
     display: none;

@@ -882,7 +882,6 @@ function Backoffice({
             <ModuleContent activeModule={activeModule} session={session} />
           )}
         </main>
-        <RightRail session={session} />
       </div>
     </div>
   );
@@ -910,10 +909,6 @@ function Topbar({
           <Menu size={22} />
         </button>
         <img alt="CognitiveBridge" src={logoUrl} />
-        <button className="create-button" type="button">
-          <Plus size={20} />
-          Crear
-        </button>
       </div>
       <strong className="topbar-title">{currentModule.label}</strong>
       <div className="topbar-actions">
@@ -1914,53 +1909,6 @@ function RestrictedModule({ module }: { module: ModuleDefinition }) {
         </p>
       </section>
     </section>
-  );
-}
-
-function RightRail({ session }: { session: AuthSession }) {
-  const teammates = [
-    "n.miranda@cognitivebridge.cl",
-    "gabriel@cognitivebridge.cl",
-    "felipe@cognitivebridge.cl",
-    "sebastian@cognitivebridge.cl",
-  ];
-
-  return (
-    <aside className="right-rail">
-      <div className="rail-search">
-        <Search size={18} />
-        <input placeholder="Buscar" />
-      </div>
-      <section>
-        <h2>Equipo</h2>
-        <div className="teammate-list">
-          {teammates.map((email) => (
-            <article key={email}>
-              <div className="avatar sm">{initials(email)}</div>
-              <div>
-                <strong>{email.split("@")[0]}</strong>
-                <span>
-                  {email === session.email
-                    ? "Sesión actual"
-                    : "CognitiveBridge"}
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section>
-        <h2>Estado</h2>
-        <div className="system-status">
-          <span />
-          API protegida por Cognito
-        </div>
-        <div className="system-status">
-          <span />
-          Hosting S3 + CloudFront
-        </div>
-      </section>
-    </aside>
   );
 }
 
