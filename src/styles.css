@@ -169,6 +169,30 @@ textarea:focus {
   font-weight: 780;
 }
 
+.field-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  color: #668096;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.field-footer span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: 620;
+}
+
+.field-footer strong {
+  flex: 0 0 auto;
+  color: #315c78;
+  font-size: inherit;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
 .auth-actions,
 .copy-actions,
 .module-actions,
@@ -671,11 +695,33 @@ textarea:focus {
 .opportunity-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 168px;
+  align-items: start;
   gap: 18px;
   border: 1px solid #e5ebf0;
   border-radius: 8px;
   background: #ffffff;
   padding: 18px;
+}
+
+.status-control {
+  display: grid;
+  align-self: start;
+  gap: 8px;
+  min-width: 148px;
+}
+
+.status-control span {
+  color: #748899;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status-control select {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 12px;
 }
 
 .opportunity-summary h3 {
@@ -984,6 +1030,8 @@ textarea:focus {
   }
 
   .search-box.compact,
+  .status-control,
+  .status-control select,
   .table-tools,
   .table-tools select,
   .primary-button,

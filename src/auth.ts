@@ -376,10 +376,24 @@ async function resourcesRequest<TResponse>(
       ? body.message.join(" ")
       : body?.message;
 
-    throw new Error(message || "No se pudo completar la operación.");
+    throw new Error(toReadableResourcesError(message));
   }
 
   return response.json() as Promise<TResponse>;
+}
+
+function toReadableResourcesError(message?: string) {
+  if (!message) {
+    return "No se pudo completar la operación.";
+  }
+
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("requirements must contain no more than")) {
+    return "Puedes registrar hasta 12 requisitos principales.";
+  }
+
+  return message;
 }
 
 export async function listResourceUsers() {
