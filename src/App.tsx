@@ -227,7 +227,7 @@ function notify(message: string, type: "error" | "success" = "error") {
       popup: "swal-card",
       title: "swal-title",
     },
-    html: `<div class="swal-brand"><img src="${isotypeUrl}" alt="" /><span>CognitiveBridge Resources</span></div><p>${escapeHtml(message)}</p>`,
+    html: `<div class="swal-brand"><img src="${isotypeUrl}" alt="" /><span>CognitiveBridge EMAUS</span></div><p>${escapeHtml(message)}</p>`,
     icon: type,
     title: type === "success" ? "Listo" : "Revisemos esto",
   });
@@ -515,7 +515,7 @@ function LoginScreen({
   }
 
   return (
-    <AuthLayout kicker="Portal interno" title="Resources">
+    <AuthLayout kicker="Portal interno" title="EMAUS">
       <form className="auth-form" onSubmit={handleSubmit}>
         <label className="field">
           <span>Correo corporativo</span>
@@ -1774,7 +1774,7 @@ function UsersModule() {
             Actualizar
           </button>
         }
-        description="Administra accesos al portal Resources con cuentas corporativas."
+        description="Administra accesos a EMAUS con cuentas corporativas."
         kicker="Administración"
         title="Usuarios internos"
       />
