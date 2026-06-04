@@ -205,7 +205,7 @@ const initialOpportunityForm = {
 };
 
 const opportunitySummaryMaxLength = 900;
-const opportunityRequirementsMaxItems = 12;
+const opportunityRequirementsMaxItems = 40;
 const opportunityRequirementsMaxLength = 1200;
 
 let lastAlertKey = "";
@@ -1488,7 +1488,7 @@ function OpportunitiesModule() {
           />
           <TextareaField
             counter={`${requirementCount}/${opportunityRequirementsMaxItems} requisitos`}
-            hint="Un requisito por línea. Máximo 12 requisitos."
+            hint={`Un requisito por línea. Máximo ${opportunityRequirementsMaxItems} requisitos.`}
             label="Requisitos principales"
             maxLength={opportunityRequirementsMaxLength}
             onChange={(value) =>
