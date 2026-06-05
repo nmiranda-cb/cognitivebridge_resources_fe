@@ -1,12 +1,12 @@
 import {
   Activity,
-  Bell,
   BriefcaseBusiness,
   CalendarDays,
   Check,
   ClipboardList,
   Copy,
   Database,
+  Download,
   FileText,
   LayoutDashboard,
   Lock,
@@ -15,7 +15,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Settings,
   ShieldCheck,
   Signature,
   Trash2,
@@ -39,9 +38,11 @@ import {
   confirmRegistration,
   createStaffOpportunity,
   disableResourceUser,
+  downloadStaffApplicationCv,
   finishPasswordReset,
   getStoredSession,
   inviteResourceUser,
+  listStaffApplications,
   listResourceUsers,
   listStaffOpportunities,
   registerWithCredentials,
@@ -50,6 +51,8 @@ import {
   signOut,
   startPasswordReset,
   type ResourceUser,
+  type StaffApplication,
+  type StaffApplicationCv,
   type StaffOpportunity,
   type StaffOpportunityPayload,
   type StaffOpportunityStatus,
@@ -81,6 +84,7 @@ type AuthViewState =
   | { status: "checking" };
 
 type ModuleKey =
+  | "applications"
   | "dashboard"
   | "opportunities"
   | "signatures"
@@ -117,6 +121,14 @@ const modules: ModuleDefinition[] = [
     icon: <BriefcaseBusiness size={19} />,
     key: "opportunities",
     label: "Staff Services",
+    section: "operations",
+  },
+  {
+    adminOnly: true,
+    description: "Base de postulantes asociados a oportunidades publicadas.",
+    icon: <ClipboardList size={19} />,
+    key: "applications",
+    label: "Postulantes",
     section: "operations",
   },
   {
@@ -323,6 +335,28 @@ function parseOpportunityRequirements(value: string) {
     .split("\n")
     .map((requirement) => requirement.trim())
     .filter(Boolean);
+}
+
+function saveBase64File(file: StaffApplicationCv) {
+  const binary = window.atob(file.cvBase64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  const blob = new Blob([bytes.buffer as ArrayBuffer], {
+    type: file.contentType || "application/pdf",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = file.fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 250);
 }
 
 function App() {
@@ -949,15 +983,6 @@ function Topbar({
       </div>
       <strong className="topbar-title">{currentModule.label}</strong>
       <div className="topbar-actions">
-        <button className="icon-button" type="button">
-          <Search size={22} />
-        </button>
-        <button className="icon-button notification" type="button">
-          <Bell size={22} />
-        </button>
-        <button className="icon-button" type="button">
-          <Settings size={22} />
-        </button>
         <button className="profile-button" title={session.email} type="button">
           {initials(session.email)}
         </button>
@@ -1049,6 +1074,10 @@ function ModuleContent({
 }) {
   if (activeModule === "opportunities") {
     return <OpportunitiesModule />;
+  }
+
+  if (activeModule === "applications") {
+    return <ApplicationsModule />;
   }
 
   if (activeModule === "signatures") {
@@ -1607,6 +1636,167 @@ function OpportunitiesModule() {
           </div>
         </section>
       </div>
+    </section>
+  );
+}
+
+function ApplicationsModule() {
+  const [applications, setApplications] = useState<StaffApplication[]>([]);
+  const [downloadId, setDownloadId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<LoadStatus>("idle");
+
+  const filteredApplications = applications.filter((application) => {
+    const searchable = [
+      application.firstName,
+      application.lastName,
+      application.rut,
+      application.email,
+      application.opportunityTitle,
+      application.opportunityId,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return searchable.includes(query.trim().toLowerCase());
+  });
+
+  async function loadApplications() {
+    setStatus("loading");
+
+    try {
+      const response = await listStaffApplications();
+      setApplications(response.applications);
+      setStatus("idle");
+    } catch (error) {
+      setStatus("error");
+      notifyToast(
+        error instanceof Error
+          ? error.message
+          : "No se pudieron cargar postulantes.",
+        "error",
+      );
+    }
+  }
+
+  useEffect(() => {
+    void loadApplications();
+  }, []);
+
+  async function handleDownload(application: StaffApplication) {
+    setDownloadId(application.applicationId);
+
+    try {
+      const cv = await downloadStaffApplicationCv(application.applicationId);
+      saveBase64File(cv);
+      notifyToast("CV descargado.", "success");
+    } catch (error) {
+      notifyToast(
+        error instanceof Error ? error.message : "No se pudo descargar el CV.",
+        "error",
+      );
+    } finally {
+      setDownloadId(null);
+    }
+  }
+
+  return (
+    <section className="module-stack">
+      <ModuleHeader
+        action={
+          <button
+            className="secondary-button"
+            disabled={status === "loading" || Boolean(downloadId)}
+            onClick={loadApplications}
+            type="button"
+          >
+            <RefreshCw size={17} />
+            Actualizar
+          </button>
+        }
+        description="Consulta postulantes recibidos desde la web pública y descarga CVs privados para seguimiento interno."
+        kicker="Base de postulantes"
+        title="Postulantes"
+      />
+      <section className="panel table-panel">
+        <div className="panel-title-row wrap">
+          <div>
+            <p className="eyebrow">Operación</p>
+            <h2>Postulaciones recibidas</h2>
+          </div>
+          <div className="table-tools">
+            <div className="search-box compact">
+              <Search size={17} />
+              <input
+                aria-label="Buscar postulantes"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar"
+                value={query}
+              />
+            </div>
+          </div>
+        </div>
+
+        {status === "loading" ? (
+          <TableMessage text="Cargando postulantes..." />
+        ) : null}
+        {status !== "loading" && filteredApplications.length === 0 ? (
+          <EmptyState
+            icon={<Database />}
+            text="Cuando alguien postule desde la web, aparecerá asociado a su oportunidad."
+            title="Aún no hay postulantes visibles"
+          />
+        ) : null}
+
+        {filteredApplications.length > 0 ? (
+          <div className="data-table applications-table">
+            <div className="table-row table-head applications-table-row">
+              <div>Nombre</div>
+              <div>Apellido</div>
+              <div>RUT</div>
+              <div>Empleo</div>
+              <div>Fecha</div>
+              <div>CV</div>
+            </div>
+            {filteredApplications.map((application) => (
+              <div
+                className="table-row applications-table-row"
+                key={application.applicationId}
+              >
+                <div className="table-cell-stack">
+                  <strong>{application.firstName}</strong>
+                  <small>{application.email}</small>
+                </div>
+                <div className="table-cell-stack">
+                  <strong>{application.lastName}</strong>
+                  <small>{application.phone || "Sin teléfono"}</small>
+                </div>
+                <div>{application.rut}</div>
+                <div className="table-cell-stack">
+                  <strong>{application.opportunityTitle}</strong>
+                  <small>{application.opportunityId}</small>
+                </div>
+                <div>{formatDate(application.submittedAt)}</div>
+                <div>
+                  <button
+                    className="secondary-button compact"
+                    disabled={downloadId === application.applicationId}
+                    onClick={() => {
+                      void handleDownload(application);
+                    }}
+                    type="button"
+                  >
+                    <Download size={16} />
+                    {downloadId === application.applicationId
+                      ? "Descargando"
+                      : "Descargar"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
     </section>
   );
 }

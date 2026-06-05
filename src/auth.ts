@@ -62,6 +62,30 @@ export interface StaffOpportunityPayload {
   title: string;
 }
 
+export interface StaffApplication {
+  applicationId: string;
+  cvDownloadPath: string;
+  cvFileName: string;
+  cvOriginalFileName: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  linkedinUrl: string;
+  opportunityId: string;
+  opportunityTitle: string;
+  phone?: string;
+  rut: string;
+  status: "received";
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface StaffApplicationCv {
+  contentType: string;
+  cvBase64: string;
+  fileName: string;
+}
+
 export interface ResourceUser {
   createdAt: string | null;
   email: string;
@@ -448,5 +472,21 @@ export async function updateStaffOpportunity(
       body: JSON.stringify(payload),
       method: "PATCH",
     },
+  );
+}
+
+export async function listStaffApplications(opportunityId?: string) {
+  const query = opportunityId
+    ? `?opportunityId=${encodeURIComponent(opportunityId)}`
+    : "";
+
+  return resourcesRequest<{ applications: StaffApplication[] }>(
+    `/admin/applications${query}`,
+  );
+}
+
+export async function downloadStaffApplicationCv(applicationId: string) {
+  return resourcesRequest<StaffApplicationCv>(
+    `/admin/applications/${encodeURIComponent(applicationId)}/cv`,
   );
 }
