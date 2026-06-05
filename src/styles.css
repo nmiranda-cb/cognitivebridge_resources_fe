@@ -703,6 +703,12 @@ textarea:focus {
   padding: 18px;
 }
 
+.opportunity-actions {
+  display: grid;
+  align-self: start;
+  gap: 10px;
+}
+
 .status-control {
   display: grid;
   align-self: start;
@@ -1102,6 +1108,7 @@ textarea:focus {
   }
 
   .search-box.compact,
+  .opportunity-actions,
   .status-control,
   .status-control select,
   .table-tools,
