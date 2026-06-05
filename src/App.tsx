@@ -216,9 +216,9 @@ const initialOpportunityForm = {
   title: "",
 };
 
-const opportunitySummaryMaxLength = 900;
-const opportunityRequirementsMaxItems = 40;
-const opportunityRequirementsMaxLength = 1200;
+const opportunitySummaryMaxLength = 1800;
+const opportunityRequirementsMaxItems = 80;
+const opportunityRequirementsMaxLength = 2400;
 
 let lastAlertKey = "";
 let lastAlertAt = 0;
@@ -327,6 +327,20 @@ function toPayload(
     status: form.status,
     summary: form.summary.trim(),
     title: form.title.trim(),
+  };
+}
+
+function toOpportunityForm(opportunity: StaffOpportunity) {
+  return {
+    area: opportunity.area,
+    location: opportunity.location,
+    modality: opportunity.modality,
+    requirements: opportunity.requirements.join("\n"),
+    seniority: opportunity.seniority,
+    serviceModel: opportunity.serviceModel,
+    status: opportunity.status,
+    summary: opportunity.summary,
+    title: opportunity.title,
   };
 }
 
@@ -1274,6 +1288,9 @@ function DashboardModule({ session }: { session: AuthSession }) {
 }
 
 function OpportunitiesModule() {
+  const [editingOpportunityId, setEditingOpportunityId] = useState<
+    string | null
+  >(null);
   const [form, setForm] = useState(initialOpportunityForm);
   const [opportunities, setOpportunities] = useState<StaffOpportunity[]>([]);
   const [query, setQuery] = useState("");
@@ -1281,6 +1298,7 @@ function OpportunitiesModule() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | StaffOpportunityStatus
   >("all");
+  const isEditing = Boolean(editingOpportunityId);
 
   const counters = useMemo(
     () =>
@@ -1339,6 +1357,17 @@ function OpportunitiesModule() {
     void loadOpportunities();
   }, []);
 
+  function resetOpportunityForm() {
+    setEditingOpportunityId(null);
+    setForm(initialOpportunityForm);
+  }
+
+  function handleEdit(opportunity: StaffOpportunity) {
+    setEditingOpportunityId(opportunity.opportunityId);
+    setForm(toOpportunityForm(opportunity));
+    window.scrollTo({ behavior: "smooth", top: 0 });
+  }
+
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const payload = toPayload(form);
@@ -1374,8 +1403,27 @@ function OpportunitiesModule() {
     setStatus("saving");
 
     try {
+      if (editingOpportunityId) {
+        const response = await updateStaffOpportunity(
+          editingOpportunityId,
+          payload,
+        );
+
+        setOpportunities((currentOpportunities) =>
+          currentOpportunities.map((opportunity) =>
+            opportunity.opportunityId === editingOpportunityId
+              ? response.opportunity
+              : opportunity,
+          ),
+        );
+        resetOpportunityForm();
+        notifyToast("Oportunidad actualizada.", "success");
+        setStatus("idle");
+        return;
+      }
+
       await createStaffOpportunity(payload);
-      setForm(initialOpportunityForm);
+      resetOpportunityForm();
       notifyToast("Oportunidad creada.", "success");
       await loadOpportunities();
     } catch (error) {
@@ -1451,9 +1499,21 @@ function OpportunitiesModule() {
         <form className="panel form-panel" onSubmit={handleCreate}>
           <div className="panel-title-row">
             <div>
-              <p className="eyebrow">Nueva oportunidad</p>
-              <h2>Datos base</h2>
+              <p className="eyebrow">
+                {isEditing ? "Edición de oportunidad" : "Nueva oportunidad"}
+              </p>
+              <h2>{isEditing ? "Editar campos" : "Datos base"}</h2>
             </div>
+            {isEditing ? (
+              <button
+                className="secondary-button compact"
+                onClick={resetOpportunityForm}
+                type="button"
+              >
+                <X size={16} />
+                Cancelar
+              </button>
+            ) : null}
           </div>
           <TextField
             label="Título"
@@ -1532,8 +1592,12 @@ function OpportunitiesModule() {
             disabled={status === "saving"}
             type="submit"
           >
-            <Plus size={18} />
-            {status === "saving" ? "Guardando..." : "Crear oportunidad"}
+            {isEditing ? <Check size={18} /> : <Plus size={18} />}
+            {status === "saving"
+              ? "Guardando..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Crear oportunidad"}
           </button>
         </form>
         <section className="panel table-panel">
@@ -1611,26 +1675,37 @@ function OpportunitiesModule() {
                     </div>
                   </dl>
                 </div>
-                <label className="status-control">
-                  <span>Estado</span>
-                  <select
-                    aria-label={`Cambiar estado de ${opportunity.title}`}
+                <div className="opportunity-actions">
+                  <button
+                    className="secondary-button compact"
                     disabled={status === "saving"}
-                    onChange={(event) =>
-                      handleStatusChange(
-                        opportunity.opportunityId,
-                        event.target.value as StaffOpportunityStatus,
-                      )
-                    }
-                    value={opportunity.status}
+                    onClick={() => handleEdit(opportunity)}
+                    type="button"
                   >
-                    {Object.entries(statusLabels).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <FileText size={16} />
+                    Editar campos
+                  </button>
+                  <label className="status-control">
+                    <span>Estado</span>
+                    <select
+                      aria-label={`Cambiar estado de ${opportunity.title}`}
+                      disabled={status === "saving"}
+                      onChange={(event) =>
+                        handleStatusChange(
+                          opportunity.opportunityId,
+                          event.target.value as StaffOpportunityStatus,
+                        )
+                      }
+                      value={opportunity.status}
+                    >
+                      {Object.entries(statusLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </article>
             ))}
           </div>
