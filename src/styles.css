@@ -879,6 +879,31 @@ textarea:focus {
   text-transform: uppercase;
 }
 
+.applications-table-row {
+  grid-template-columns:
+    minmax(160px, 0.9fr) minmax(160px, 0.9fr) 130px
+    minmax(240px, 1.2fr) 132px 154px;
+  min-width: 980px;
+}
+
+.table-cell-stack {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.table-cell-stack strong,
+.table-cell-stack small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-cell-stack small {
+  color: #657d90;
+  font-size: 0.8rem;
+}
+
 .mobile-only {
   display: none;
 }
